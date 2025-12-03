@@ -156,11 +156,10 @@ app.post("/api/events/:id/purchase", authenticateToken, async (req, res) => {
  * Ouput: Console log confirmation and a running HTTP server instance
  */
 const PORT = parseInt(process.env.PORT, 10) || 6001;
-if (process.env.NODE_ENV !== "test") {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Client service listening on ${PORT}`);
-  });
-}
+console.log("[client-service] Starting server. PORT=", process.env.PORT, "Resolved=", PORT);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Client service listening on ${PORT}`);
+});
 
 export default app;
 
