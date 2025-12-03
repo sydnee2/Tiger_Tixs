@@ -1,0 +1,256 @@
+/* General layout */
+.App {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #fafafa;
+  color: #222;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* Title */
+.App h1 {
+  color: #F66733; /* Clemson orange */
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Login */
+#login-password {
+  width: 50%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+#login-email {
+  width: 50%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+#login-button {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.6rem;
+  background: #F66733;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+/* Register */
+#register-password {
+  width: 50%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+#register-email {
+  width: 50%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+#register-button {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.6rem;
+  background: #F66733;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+/* Profile */
+#logout-button {
+  display: inline-block;
+  width: 50%;
+  margin-top: 0.5rem;
+  margin-right: 0.5rem;
+  padding: 0.6rem;
+  background: #F66733;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#view-profile-button {
+  display: inline-block;
+  width: 50%;
+  margin-top: 0.5rem;
+  padding: 0.6rem;
+  background: #F66733;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#close-profile-button {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.6rem;
+  background: #522D80;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+/* Voice assistant section */
+#voice-interface {
+  max-width: 700px;
+  margin: 0 auto 2rem auto;
+  background: white;
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+#voice-interface h3 {
+  color: #522D80; /* Clemson purple */
+  text-align: center;
+  margin-top: 0;
+}
+
+#chat-window {
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  border-radius: 12px;
+  height: 220px;
+  overflow-y: auto;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+/* Chat messages */
+.user-msg, .bot-msg {
+  display: inline-block;
+  clear: both;
+  padding: 0.5rem 0.8rem;
+  border-radius: 12px;
+  margin-bottom: 0.4rem;
+  line-height: 1.4;
+  max-width: 90%;
+}
+
+.user-msg {
+  background: #F66733;
+  color: white;
+  float: right;
+}
+
+.bot-msg {
+  background: #e0e0e0;
+  color: #222;
+  float: left;
+}
+
+/* Microphone button */
+.mic-btn {
+  display: block;
+  margin: 0.5rem auto;
+  padding: 0.6rem 1.5rem;
+  background: #522D80;
+  color: white;
+  font-size: 1rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.mic-btn:hover {
+  background: #3c1f63;
+}
+
+/* Event list */
+ul {
+  list-style: none;
+  padding: 0;
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+li article {
+  background: white;
+  border-radius: 16px;
+  padding: 1.2rem;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+li article:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+article h2 {
+  margin-top: 0;
+  color: #522D80;
+}
+
+article p {
+  margin: 0.3rem 0;
+}
+
+/* Buy button */
+article button {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.6rem;
+  background: #F66733;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+article button:hover:not(:disabled) {
+  background: #cf521d;
+}
+
+article button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}

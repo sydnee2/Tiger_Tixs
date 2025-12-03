@@ -1,0 +1,61 @@
+services:
+  - name: admin-service
+    type: web
+    env: node
+    plan: free
+    rootDir: backend/admin-service
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    autoDeploy: true
+    envVars:
+      - key: DB_PATH
+        value: ./data.db
+      - key: ALLOWED_ORIGIN
+        value: http://localhost:3000,https://clemson-ticketing-system.vercel.app
+  - name: client-service
+    type: web
+    env: node
+    plan: free
+    rootDir: backend/client-service
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: DB_PATH
+        value: ./data.db
+      - key: JWT_SECRET
+        value: supersecretkey123!
+      - key: ALLOWED_ORIGIN
+        value: http://localhost:3000,https://clemson-ticketing-system.vercel.app
+  - name: user-authentication
+    type: web
+    env: node
+    plan: free
+    rootDir: backend/user-authentication
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    autoDeploy: true
+    envVars:
+      - key: JWT_SECRET
+        value: supersecretkey123!
+      - key: ALLOWED_ORIGIN
+        value: http://localhost:3000,https://clemson-ticketing-system.vercel.app
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: NODE_ENV
+        value: production
+  - name: llm-driven-booking
+    type: web
+    env: node
+    plan: free
+    rootDir: backend/llm-driven-booking
+    buildCommand: npm ci --omit=dev
+    startCommand: node src/server.js
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: OLLAMA_API_URL
+        value: http://localhost:11434
+      - key: ALLOWED_ORIGIN
+        value: http://localhost:3000,https://clemson-ticketing-system.vercel.app

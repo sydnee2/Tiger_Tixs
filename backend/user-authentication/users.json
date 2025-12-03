@@ -1,0 +1,42 @@
+[
+  {
+    "id": "1763056158182",
+    "email": "sydneetrichardson@gmail.com",
+    "passwordHash": "$2a$10$GoII53L3np2Pk1plEDg8uOBw7l49t1PCm1wFi0KU2LOlOBwi4FmMm"
+  },
+  {
+    "id": "1763056215214",
+    "email": "integration_test@example.com",
+    "passwordHash": "$2a$10$jHEX5.vLDkAga4gvrAA6ZOKGR5Mz55PcEE8tyzYWPxAL2iu6.ZGfy"
+  },
+  {
+    "id": "1763056601282",
+    "email": "sydnee@gmail.com",
+    "passwordHash": "$2a$10$RCCKIjUyYtVQV7fwZvWp8eHLOIG8j7Y7OLtA5H5Lk3eUgufT99IxG"
+  },
+  {
+    "id": "1763494019516",
+    "email": "cyocum@clemson.edu",
+    "passwordHash": "$2a$10$ovHNWW2Bk4g9gst1nwuINuMc1tYz/p3W69XvRtygpMW6p5ACiogBy"
+  },
+  {
+    "id": "1764631963024",
+    "email": "sydnee@gmail",
+    "passwordHash": "$2a$10$UhVVS/ZXkVD5ddH63WVnAuWy5g99ThBM0EGzUqKUd5qw1o/72yIga"
+  },
+  {
+    "id": "1764631998833",
+    "email": "hello",
+    "passwordHash": "$2a$10$Pf1yWCKgNvM7G.kVESXN.OmAH9MRig2qAk1P.BWUDErCahZ.8YNGy"
+  },
+  {
+    "id": "1764638905252",
+    "email": "sydnee",
+    "passwordHash": "$2a$10$NgB3qBXmpuJr1YKpN5TL..4WtO0KwPuV2eq0IM/AeXkIj0/oJlBbC"
+  },
+  {
+    "id": "1764707144545",
+    "email": "c",
+    "passwordHash": "$2a$10$MhqDVVrVbLNRqwQ9yvswAeSlZAiH8Tw25KdfyKoqTRe7P8eaYqs0a"
+  }
+]

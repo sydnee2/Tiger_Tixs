@@ -1,0 +1,25 @@
+{
+  "name": "user-authentication",
+  "version": "1.0.0",
+  "description": "Simple user authentication microservice for ClemsonTicketingSystem",
+  "main": "server.js",
+  "type": "commonjs",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "supertest": "^7.0.0"
+  }
+}
