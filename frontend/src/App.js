@@ -25,59 +25,67 @@ function App() {
   const [pendingBooking, setPendingBooking] = useState(null);
   const bookingRef = useRef(pendingBooking);
 
+  // NEW: ref to always hold latest auth state for the voice assistant
+  const authRef = useRef({ isAuthenticated: false, authToken: null });
+
   // Admin form state
   const [showAdminForm, setShowAdminForm] = useState(false);
   const [adminEventName, setAdminEventName] = useState('');
   const [adminEventDate, setAdminEventDate] = useState('');
   const [adminEventTickets, setAdminEventTickets] = useState('');
 
-useEffect(() => {
-  bookingRef.current = pendingBooking;
-}, [pendingBooking]);
+  useEffect(() => {
+    bookingRef.current = pendingBooking;
+  }, [pendingBooking]);
 
-// On mount, check session
-useEffect(() => {
-  // Restore token from localStorage on mount
-  const storedToken = localStorage.getItem('authToken');
-  if (storedToken) setAuthToken(storedToken);
+  // NEW: keep authRef in sync with latest auth state
+  useEffect(() => {
+    authRef.current = { isAuthenticated, authToken };
+  }, [isAuthenticated, authToken]);
 
-  const checkSession = async () => {
-    try {
-      const res = await fetch(`${AUTH_BASE}/me`, { credentials: 'include' });
-      if (!res.ok) {
+  // On mount, check session
+  useEffect(() => {
+    // Restore token from localStorage on mount
+    const storedToken = localStorage.getItem('authToken');
+    if (storedToken) setAuthToken(storedToken);
+
+    const checkSession = async () => {
+      try {
+        const res = await fetch(`${AUTH_BASE}/me`, { credentials: 'include' });
+        if (!res.ok) {
+          setIsAuthenticated(false);
+          setUserEmail(null);
+          setAuthToken(null);
+          return;
+        }
+        const data = await res.json();
+        if (data.authenticated) {
+          setIsAuthenticated(true);
+          setUserEmail(data.email);
+          // Note: token will be set on login, not available from /me endpoint
+        } else {
+          setIsAuthenticated(false);
+          setUserEmail(null);
+          setAuthToken(null);
+        }
+      } catch (err) {
+        console.error('Session check failed', err);
         setIsAuthenticated(false);
         setUserEmail(null);
         setAuthToken(null);
-        return;
       }
-      const data = await res.json();
-      if (data.authenticated) {
-        setIsAuthenticated(true);
-        setUserEmail(data.email);
-        // Note: token will be set on login, not available from /me endpoint
-      } else {
-        setIsAuthenticated(false);
-        setUserEmail(null);
-        setAuthToken(null);
-      }
-    } catch (err) {
-      console.error('Session check failed', err);
-      setIsAuthenticated(false);
-      setUserEmail(null);
-      setAuthToken(null);
-    }
-  };
-  checkSession();
-}, []);
+    };
+    checkSession();
+  }, [AUTH_BASE]);
 
-/**
- * Purpose: Fetches and displays event data from the backend when the component loads
- * Input: setEvent - updates the list of event in state
- *        eventRef - keeps a persistent reference to the latest event data
- *        setLoading - toggles loading status for the UI.
- *        HTTP request - sents a request to the backend for the events
- * Ouput: Updates events state, logs data, and stops the loading spinner
- */
+  /**
+   * Purpose: Fetches and displays event data from the backend when the component loads
+   * Input: setEvent - updates the list of event in state
+   *        eventRef - keeps a persistent reference to the latest event data
+   *        setLoading - toggles loading status for the UI.
+   *        HTTP request - sents a request to the backend for the events
+   * Ouput: Updates events state, logs data, and stops the loading spinner
+   */
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -96,12 +104,12 @@ useEffect(() => {
     fetchEvents();
   }, [CLIENT_BASE]);
 
-/**
- * Purpose: Purchases one ticket for a selected event and updates the UI
- * Input: id - int, The unique ID of the event to purchase a ticket for
- *        name - String, The event name, used for the success alert message
- * Ouput: Success or error alert + updated event list in state
- */
+  /**
+   * Purpose: Purchases one ticket for a selected event and updates the UI
+   * Input: id - int, The unique ID of the event to purchase a ticket for
+   *        name - String, The event name, used for the success alert message
+   * Ouput: Success or error alert + updated event list in state
+   */
   const buyTicket = async (id, name) => {
     try {
       const res = await fetch(
@@ -258,65 +266,65 @@ useEffect(() => {
     }
   };
 
-/**
- * Purpose: Enables speech-to-text interaction for booking and event queries
- * Input: Microphone click + spoken words
- * Ouput: Recognized text sent to LLM service and displayed in chat
- */
-useEffect(() => {
-  const initVoiceAssistant = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      if (process.env.NODE_ENV !== 'test') {
-        alert("Speech Recognition not supported in this browser.");
+  /**
+   * Purpose: Enables speech-to-text interaction for booking and event queries
+   * Input: Microphone click + spoken words
+   * Ouput: Recognized text sent to LLM service and displayed in chat
+   */
+  useEffect(() => {
+    const initVoiceAssistant = () => {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        if (process.env.NODE_ENV !== 'test') {
+          alert("Speech Recognition not supported in this browser.");
+        }
+        return;
       }
-      return;
-    }
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
 
-    const micBtn = document.getElementById("mic-btn");
-    const beep = document.getElementById("beep-sound");
-    const chatWindow = document.getElementById("chat-window");
+      const micBtn = document.getElementById("mic-btn");
+      const beep = document.getElementById("beep-sound");
+      const chatWindow = document.getElementById("chat-window");
 
-    if (!micBtn || !chatWindow) {
-      console.warn("Voice elements not found yet — retrying...");
-      setTimeout(initVoiceAssistant, 300);
-      return;
-    }
-
-    micBtn.addEventListener("click", () => {
-      if (beep) {
-        beep.currentTime = 0;
-        beep.play().catch(() => console.warn("Beep sound failed to play."));
+      if (!micBtn || !chatWindow) {
+        console.warn("Voice elements not found yet — retrying...");
+        setTimeout(initVoiceAssistant, 300);
+        return;
       }
-      setTimeout(() => recognition.start(), 400);
-    });
 
-    recognition.addEventListener("result", async (event) => {
-      const text = event.results[0][0].transcript;
+      micBtn.addEventListener("click", () => {
+        if (beep) {
+          beep.currentTime = 0;
+          beep.play().catch(() => console.warn("Beep sound failed to play."));
+        }
+        setTimeout(() => recognition.start(), 400);
+      });
 
-      const msg = document.createElement("div");
-      msg.className = "user-msg";
-      msg.textContent = text;
-      chatWindow.appendChild(msg);
+      recognition.addEventListener("result", async (event) => {
+        const text = event.results[0][0].transcript;
 
-      await sendToLLM(text, chatWindow);
-    });
+        const msg = document.createElement("div");
+        msg.className = "user-msg";
+        msg.textContent = text;
+        chatWindow.appendChild(msg);
 
-    recognition.addEventListener("speechend", () => recognition.stop());
-    recognition.addEventListener("error", (e) =>
-      console.error("Speech error:", e.error)
-    );
-  };
+        await sendToLLM(text, chatWindow);
+      });
 
-  // Run setup after short delay to ensure DOM loaded
-  setTimeout(initVoiceAssistant, 500);
-}, []);
+      recognition.addEventListener("speechend", () => recognition.stop());
+      recognition.addEventListener("error", (e) =>
+        console.error("Speech error:", e.error)
+      );
+    };
+
+    // Run setup after short delay to ensure DOM loaded
+    setTimeout(initVoiceAssistant, 500);
+  }, []);
 
 
 /**
