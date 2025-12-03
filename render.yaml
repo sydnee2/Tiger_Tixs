@@ -11,7 +11,7 @@ services:
       - key: DB_PATH
         value: ./data.db
       - key: ALLOWED_ORIGIN
-        value: http://localhost:3000,https://tiger-tixs.vercel.app/
+        value: http://localhost:3000,https://tiger-tixs.vercel.app
   - name: client-service
     type: web
     env: node
@@ -27,7 +27,7 @@ services:
       - key: JWT_SECRET
         value: supersecretkey123!
       - key: ALLOWED_ORIGIN
-        value: http://localhost:3000,https://tiger-tixs.vercel.app/
+        value: http://localhost:3000,https://tiger-tixs.vercel.app
   - name: user-authentication
     type: web
     env: node
@@ -40,7 +40,7 @@ services:
       - key: JWT_SECRET
         value: supersecretkey123!
       - key: ALLOWED_ORIGIN
-        value: http://localhost:3000,https://tiger-tixs.vercel.app/
+        value: http://localhost:3000,https://tiger-tixs.vercel.app
       - key: COOKIE_SECURE
         value: "true"
       - key: NODE_ENV
@@ -56,7 +56,7 @@ services:
     healthCheckPath: /health
     envVars:
       - key: ALLOWED_ORIGIN
-        value: http://localhost:3000,https://tiger-tixs.vercel.app/
+        value: http://localhost:3000,https://tiger-tixs.vercel.app
       - key: LLM_PROVIDER
         value: openai
       - key: OPENAI_MODEL
