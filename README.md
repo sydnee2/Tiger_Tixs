@@ -2,7 +2,8 @@
 
 TigerTix is a Clemson-themed full-stack ticket booking system with a voice-enabled LLM assistant. Users can search and book campus event tickets using natural language or speech.
 
-- Live Demo: https://tiger-tixs.vercel.app/
+- Live Website: https://tiger-tixs.vercel.app/
+- Demo Video: https://youtu.be/huXx_VBf-kU
 
 ## Download
 - GitHub: https://github.com/Nickflix21/ClemsonTicketingSystem
@@ -14,11 +15,11 @@ TigerTix is a Clemson-themed full-stack ticket booking system with a voice-enabl
 
 - Database: SQLite3
 
-- LLM Integration: Ollama + Llama 3
+- LLM Integration: OpenAI API (GPT-4o-mini)
 
 - CI/CD: GitHub Actions
 
-- Hosting: Vercel (frontend), Railway/Render (backend)
+- Hosting: Vercel (frontend), Render (backend)
 
 - Testing: Jest, React Testing Library, Supertest
 
@@ -83,19 +84,18 @@ Make sure the following are installed on your system:
 
 - **Node.js** (v18+)
 - **npm** (v9+)
-- **Ollama** (for local LLM inference)
-  - [Install Ollama](https://ollama.ai/download)
+- **OpenAI API Key** (for LLM inference)
+  - [Get API Key from OpenAI Platform](https://platform.openai.com/api-keys)
 - **SQLite3** (CLI tool, optional but useful for debugging)
 - **Port availability**
   - `3000` → Frontend React app
   - `4000` → User authentication service
   - `6001` → Client service backend  
-  - `6101` → LLM booking backend  
-  - `11434` → Ollama model server (default Ollama port)
+  - `6101` → LLM booking backend
 
 ---
 
-## LLM Setup (Ollama)
+## LLM Setup (Ollama) fot localhost if needed
 
 1. Make sure Ollama is running:
    ```bash
@@ -233,11 +233,15 @@ If you must use another port, update CORS in `backend/client-service/server.js` 
 - `REACT_APP_AUTH_BASE` -> Auth service base URL (Render)
 - `REACT_APP_LLM_BASE` -> LLM booking service base URL (Render)
 
-**Backend services (Railway/Render):**
+**Backend services (Render):**
 - `PORT` -> service port
 - `JWT_SECRET` (auth + client-service)
 - `DB_PATH` -> path to SQLite file (defaults to `./data.db` if supported)
-- Any OpenAI keys for LLM booking if used: `OPENAI_API_KEY.`
+- `LLM_PROVIDER` -> `openai` (for llm-driven-booking)
+- `OPENAI_API_KEY` -> Your OpenAI API key (for llm-driven-booking)
+- `OPENAI_MODEL` -> `gpt-4o-mini` or your preferred model (for llm-driven-booking)
+- `CLIENT_BASE` -> URL of client-service (for llm-driven-booking)
+- `ALLOWED_ORIGIN` -> Frontend URL for CORS
 
 ## CI/CD (GitHub Actions)
 - On push to `main`: installs deps, runs tests (frontend + all backend services).
@@ -258,8 +262,12 @@ If you must use another port, update CORS in `backend/client-service/server.js` 
 1. Render auto-detects services via `render.yaml` and deploys from each `rootDir`.
 2. In Render dashboard, set env vars:
   - `JWT_SECRET` (shared between `user-authentication` and `client-service`) – override the placeholder value.
-  - `ALLOWED_ORIGIN` = `http://localhost:3000,https://tiger-tixs.vercel.app/`
+  - `ALLOWED_ORIGIN` = `http://localhost:3000,https://tiger-tixs.vercel.app`
   - `COOKIE_SECURE=true` and `NODE_ENV=production` for `user-authentication`.
+  - For `llm-driven-booking`:
+    - `LLM_PROVIDER=openai`
+    - `OPENAI_MODEL=gpt-4o-mini`
+    - `CLIENT_BASE=https://client-service-try9.onrender.com`
 3. Verify health:
   - `https://client-service-try9.onrender.com/health`
   - `https://llm-driven-booking.onrender.com/health`
@@ -290,7 +298,8 @@ ClemsonTicketingSystem/
 ├── backend/
 │   ├── client-service/         # Express + SQLite backend for events
 │   ├── user-authentication/    # Express backend for user authentication
-│   └── llm-driven-booking/     # Express + Ollama LLM parser service
+│   ├── admin-service/          # Express backend for admin operations
+│   └── llm-driven-booking/     # Express + OpenAI API parser service
 ├── frontend/                   # React app with voice-enabled UI
 └── README.md                   # You are here
 ```
@@ -312,9 +321,10 @@ ClemsonTicketingSystem/
   sudo lsof -i :6001 | awk 'NR>1 {print $2}' | xargs -r kill -9
   ```
 
-### LLM returning “Unknown Event.”
-- The LLM doesn’t recognize your event text.
+### LLM returning "Unknown Event."
+- The LLM doesn't recognize your event text or the OpenAI API key is invalid.
 - Fix: ensure your backend `parseController.js` sends event names from the database dynamically to the prompt.
+- Verify your `OPENAI_API_KEY` is valid and has credits available.
 
 ### No sound/speech
 - Chrome users: ensure microphone access is enabled.
