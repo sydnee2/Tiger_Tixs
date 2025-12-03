@@ -55,7 +55,11 @@ services:
     autoDeploy: true
     healthCheckPath: /health
     envVars:
-      - key: OLLAMA_API_URL
-        value: http://localhost:11434
       - key: ALLOWED_ORIGIN
         value: http://localhost:3000,https://clemson-ticketing-system.vercel.app
+      - key: LLM_PROVIDER
+        value: openai
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: CLIENT_BASE
+        value: https://<your-client-service>.onrender.com
