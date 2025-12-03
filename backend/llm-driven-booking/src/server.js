@@ -7,7 +7,25 @@ import { confirmController } from "./controllers/confirmController.js";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// Configure CORS to support credentials and specific origins
+const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN || "http://localhost:3000,https://tiger-tixs.vercel.app";
+const allowedOrigins = RAW_ALLOWED_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean);
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (origin.startsWith("http://localhost")) return callback(null, true);
+      if (origin.startsWith("https://tiger-tixs.vercel.app")) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      console.log("[llm-driven-booking] Blocked CORS for origin:", origin, "Allowed:", allowedOrigins);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "OPTIONS"],
+  })
+);
 app.use(express.json());
 
 // Health check endpoint for Render
