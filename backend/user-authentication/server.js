@@ -129,15 +129,12 @@ app.post('/login', async (req, res) => {
    */
   // Consider production if explicitly set or if origin is not localhost (cross-site)
   const isProdCookie = process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production' || (req.headers.origin && !req.headers.origin.startsWith('http://localhost'));
-  const originHeader = req.headers.origin || '';
-  const domain = originHeader.includes('vercel.app') ? '.vercel.app' : undefined;
   
   res.cookie('token', token, {
     httpOnly: true,
     secure: isProdCookie, // required for SameSite=None
     sameSite: isProdCookie ? 'none' : 'lax', // allow cross-site cookie when deployed
     maxAge: 30 * 60 * 1000,
-    domain: domain,
     path: '/',
   });
 
@@ -152,15 +149,12 @@ app.post('/login', async (req, res) => {
  */
 app.post('/logout', (req, res) => {
   const isProdCookie = process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production' || (req.headers.origin && !req.headers.origin.startsWith('http://localhost'));
-  const originHeader = req.headers.origin || '';
-  const domain = originHeader.includes('vercel.app') ? '.vercel.app' : undefined;
   
   res.cookie('token', '', { 
     httpOnly: true, 
     maxAge: 0, 
     secure: isProdCookie, 
     sameSite: isProdCookie ? 'none' : 'lax',
-    domain: domain,
     path: '/',
   });
   return res.json({ message: 'Logged out' });

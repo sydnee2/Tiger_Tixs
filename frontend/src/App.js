@@ -328,7 +328,7 @@ const sendToLLM = async (text, chatWindow) => {
       console.log("DEBUG - isAuthenticated:", isAuthenticated);
       console.log("DEBUG - authToken:", authToken ? "present" : "missing");
 
-      if (response.includes("yes")) {
+      if (response.includes("yes") || response.includes("confirm") || response.includes("sure") || response.includes("ok")) {
         // Check if user is authenticated before attempting purchase
         if (!isAuthenticated && !authToken) {
           speakResponse("Please log in first to purchase tickets.");

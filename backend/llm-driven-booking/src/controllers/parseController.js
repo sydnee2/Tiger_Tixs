@@ -148,14 +148,14 @@ User: ${text}
     // Heuristic fallback if model didn't classify
     if (!parsed.intent || parsed.intent === "other") {
       const lower = (text || "").toLowerCase();
-      const wantsBooking = /(buy|purchase|book|reserve)/.test(lower);
+      const wantsBooking = /(buy|purchase|book|reserve|get|order|want|play|directions?)/.test(lower);
       const wantsList = /(show|list|what|which).*events|events\??/.test(lower);
-      const numMatch = lower.match(/(\d{1,2})\s*(tickets|tix|seats)?/);
+      const numMatch = lower.match(/(\d{1,2})\s*(tickets?|tix|seats?)?/);
       const tickets = numMatch ? parseInt(numMatch[1], 10) : 1;
       const bestEvent = findClosestEvent(text, eventNames);
       if (wantsList && !wantsBooking) {
         parsed = { intent: "show_events", event: "Unknown Event", tickets: 1 };
-      } else if (wantsBooking) {
+      } else if (wantsBooking || bestEvent !== "Unknown Event") {
         parsed = { intent: "propose_booking", event: bestEvent, tickets: Math.max(1, tickets) };
       }
     }
