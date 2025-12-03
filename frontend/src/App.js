@@ -407,12 +407,20 @@ const sendToLLM = async (text, chatWindow) => {
           );
         } else {
           // Handle auth errors
+          const errorText = await res.text().catch(() => "Unknown error");
+          console.error("Purchase failed:", res.status, errorText);
           if (res.status === 401) {
-            setAuthToken(null);
-            setIsAuthenticated(false);
-            speakResponse("Your session expired. Please log in again.");
+            speakResponse("Please log in to purchase tickets.");
+            const errMsg = document.createElement("div");
+            errMsg.className = "bot-msg";
+            errMsg.textContent = "You must be logged in to purchase tickets.";
+            chatWindow.appendChild(errMsg);
           } else {
             speakResponse("Sorry, I couldn't complete the booking.");
+            const errMsg = document.createElement("div");
+            errMsg.className = "bot-msg";
+            errMsg.textContent = `Booking failed: ${errorText}`;
+            chatWindow.appendChild(errMsg);
           }
         }
 
