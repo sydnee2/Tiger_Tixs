@@ -426,6 +426,7 @@ const sendToLLM = async (text, chatWindow) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
+      credentials: 'include',
     });
 
     if (!res.ok) throw new Error("LLM backend not responding");
