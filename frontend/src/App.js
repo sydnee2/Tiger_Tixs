@@ -37,6 +37,10 @@ useEffect(() => {
 
 // On mount, check session
 useEffect(() => {
+  // Restore token from localStorage on mount
+  const storedToken = localStorage.getItem('authToken');
+  if (storedToken) setAuthToken(storedToken);
+
   const checkSession = async () => {
     try {
       const res = await fetch(`${AUTH_BASE}/me`, { credentials: 'include' });
@@ -171,7 +175,10 @@ useEffect(() => {
       if (!res.ok) throw new Error(data.message || 'Login failed');
       setIsAuthenticated(true);
       setUserEmail(data.email);
-      if (data.token) setAuthToken(data.token);
+      if (data.token) {
+        setAuthToken(data.token);
+        localStorage.setItem('authToken', data.token);
+      }
       setLoginPassword('');
       alert('Logged in');
     } catch (err) {
@@ -191,6 +198,7 @@ useEffect(() => {
       setUserEmail(null);
       setProfileData(null);
       setAuthToken(null);
+      localStorage.removeItem('authToken');
       alert('Logged out');
     } catch (err) {
       console.error('Logout error', err);
