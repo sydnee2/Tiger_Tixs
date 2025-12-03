@@ -387,6 +387,7 @@ const sendToLLM = async (text, chatWindow) => {
               ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
             },
             body: JSON.stringify({ quantity: current.tickets }),
+            credentials: 'include',
           }
         );
 
