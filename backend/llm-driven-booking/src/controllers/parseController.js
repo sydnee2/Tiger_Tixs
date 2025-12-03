@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const CLIENT_BASE = process.env.CLIENT_BASE || "http://localhost:6001";
-const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://localhost:11434";
+const OLLAMA_HOST = process.env.OLLAMA_HOST || process.env.OLLAMA_API_URL || "http://localhost:11434";
 const LLM_PROVIDER = (process.env.LLM_PROVIDER || "ollama").toLowerCase();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 
@@ -85,7 +85,8 @@ User: ${text}
       if (!OPENAI_API_KEY) {
         throw new Error("OPENAI_API_KEY is required when LLM_PROVIDER=openai");
       }
-      const result = await fetch("https://api.openai.com/v1/chat/completions", {
+      const baseUrl = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1/chat/completions";
+      const result = await fetch(baseUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -94,10 +95,11 @@ User: ${text}
         body: JSON.stringify({
           model: process.env.OPENAI_MODEL || "gpt-4o-mini",
           messages: [
-            { role: "system", content: "You extract booking intents and respond ONLY with JSON." },
+            { role: "system", content: "You extract booking intents and must respond ONLY with strict JSON object containing keys: intent, event, tickets. No markdown, no extra text." },
             { role: "user", content: prompt },
           ],
           temperature: 0.2,
+          response_format: { type: "json_object" }
         }),
       });
       const data = await result.json();
@@ -141,6 +143,21 @@ User: ${text}
     } else {
       console.warn("No JSON found in LLM output:", cleaned);
       parsed = { intent: "other", event: "Unknown Event", tickets: 1 };
+    }
+
+    // Heuristic fallback if model didn't classify
+    if (!parsed.intent || parsed.intent === "other") {
+      const lower = (text || "").toLowerCase();
+      const wantsBooking = /(buy|purchase|book|reserve)/.test(lower);
+      const wantsList = /(show|list|what|which).*events|events\??/.test(lower);
+      const numMatch = lower.match(/(\d{1,2})\s*(tickets|tix|seats)?/);
+      const tickets = numMatch ? parseInt(numMatch[1], 10) : 1;
+      const bestEvent = findClosestEvent(text, eventNames);
+      if (wantsList && !wantsBooking) {
+        parsed = { intent: "show_events", event: "Unknown Event", tickets: 1 };
+      } else if (wantsBooking) {
+        parsed = { intent: "propose_booking", event: bestEvent, tickets: Math.max(1, tickets) };
+      }
     }
 
     // 5 Apply fuzzy matching to correct event name
