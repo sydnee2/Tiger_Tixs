@@ -1,0 +1,6 @@
+window.__ENV = {
+  REACT_APP_ADMIN_BASE: "https://admin-service-4qps.onrender.com",
+  REACT_APP_CLIENT_BASE: "https://client-service-try9.onrender.com",
+  REACT_APP_AUTH_BASE: "https://user-authentication-xfj1.onrender.com",
+  REACT_APP_LLM_BASE: "https://llm-driven-booking.onrender.com"
+};

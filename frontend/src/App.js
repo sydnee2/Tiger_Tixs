@@ -12,11 +12,12 @@ function App() {
   const [profileData, setProfileData] = useState(null);
   const [authToken, setAuthToken] = useState(null);
 
-  // Backend bases (use env vars in production, fallback to localhost for dev)
-  const AUTH_BASE = process.env.REACT_APP_AUTH_BASE || 'http://localhost:4000';
-  const CLIENT_BASE = process.env.REACT_APP_CLIENT_BASE || 'http://localhost:6001';
-  const LLM_BASE = process.env.REACT_APP_LLM_BASE || 'http://localhost:6101';
-  const ADMIN_BASE = process.env.REACT_APP_ADMIN_BASE || 'http://localhost:5001';
+  // Backend bases (prefer runtime window.__ENV, then build-time env, then localhost)
+  const runtimeEnv = (typeof window !== 'undefined' && window.__ENV) || {};
+  const AUTH_BASE = runtimeEnv.REACT_APP_AUTH_BASE || process.env.REACT_APP_AUTH_BASE || 'http://localhost:4000';
+  const CLIENT_BASE = runtimeEnv.REACT_APP_CLIENT_BASE || process.env.REACT_APP_CLIENT_BASE || 'http://localhost:6001';
+  const LLM_BASE = runtimeEnv.REACT_APP_LLM_BASE || process.env.REACT_APP_LLM_BASE || 'http://localhost:6101';
+  const ADMIN_BASE = runtimeEnv.REACT_APP_ADMIN_BASE || process.env.REACT_APP_ADMIN_BASE || 'http://localhost:5001';
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
