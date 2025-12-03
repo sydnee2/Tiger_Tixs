@@ -326,195 +326,196 @@ function App() {
     setTimeout(initVoiceAssistant, 500);
   }, []);
 
+  /**
+   * Purpose: Handles both normal and confirmation interactions with the LLM service
+   * Input: text - string, The text recognized from the user’s speech
+   * Ouput: Chat and voice responses, booking confirmations, or fallback errors
+   */
+  const sendToLLM = async (text, chatWindow) => {
+    try {
+      // Handle confirmation keywords first
+      if (bookingRef.current) {
+        const response = text.toLowerCase();
+        const current = bookingRef.current; // latest booking info
 
-/**
- * Purpose: Handles both normal and confirmation interactions with the LLM service
- * Input: text - string, The text recognized from the user’s speech
- * Ouput: Chat and voice responses, booking confirmations, or fallback errors
- */
-const sendToLLM = async (text, chatWindow) => {
-  try {
-    // Handle confirmation keywords first
-    if (bookingRef.current) {
-      const response = text.toLowerCase();
-      const current = bookingRef.current; // latest booking info
+        console.log("DEBUG - current bookingRef:", bookingRef.current);
+        console.log("DEBUG - all events fetched from DB:", eventsRef.current);
 
-      console.log("DEBUG - current bookingRef:", bookingRef.current);
-      console.log("DEBUG - all events fetched from DB:", eventsRef.current);
-      console.log("DEBUG - isAuthenticated:", isAuthenticated);
-      console.log("DEBUG - authToken:", authToken ? "present" : "missing");
+        // NEW: pull latest auth state from ref so we don't get stale values
+        const { isAuthenticated: currentAuth, authToken: currentToken } = authRef.current;
+        console.log("DEBUG - isAuthenticated:", currentAuth);
+        console.log("DEBUG - authToken:", currentToken ? "present" : "missing");
 
-      if (response.includes("yes") || response.includes("confirm") || response.includes("sure") || response.includes("ok")) {
-        // Check if user is authenticated before attempting purchase
-        if (!isAuthenticated && !authToken) {
-          speakResponse("Please log in first to purchase tickets.");
-          const errMsg = document.createElement("div");
-          errMsg.className = "bot-msg";
-          errMsg.textContent = "You must be logged in to purchase tickets. Please log in and try again.";
-          chatWindow.appendChild(errMsg);
-          setPendingBooking(null);
-          return;
-        }
-
-        const normalize = (str) =>
-          str
-            .toLowerCase()
-            .replace(/[^a-z0-9 ]/g, "")
-            .replace(/\s+/g, " ")
-            .trim();
-
-        const normalizedTarget = normalize(current.event);
-        console.log("🔎 Normalized target:", normalizedTarget);
-
-        console.log("Available events:");
-        eventsRef.current.forEach((e, i) =>
-          console.log(`  [${i}] ${normalize(e.name)}`)
-        );
-
-        // Find best match among current events
-        let bestMatch = null;
-        let highestScore = 0;
-
-        for (const e of eventsRef.current) {
-          const normalizedEvent = normalize(e.name);
-          const targetWords = new Set(normalizedTarget.split(" "));
-          const eventWords = new Set(normalizedEvent.split(" "));
-          const intersection = [...targetWords].filter((w) =>
-            eventWords.has(w)
-          ).length;
-          const union = new Set([...targetWords, ...eventWords]).size;
-          const score = intersection / union;
-
-          if (score > highestScore) {
-            highestScore = score;
-            bestMatch = e;
+        if (response.includes("yes") || response.includes("confirm") || response.includes("sure") || response.includes("ok")) {
+          // Check if user is authenticated before attempting purchase
+          if (!currentAuth && !currentToken) {
+            speakResponse("Please log in first to purchase tickets.");
+            const errMsg = document.createElement("div");
+            errMsg.className = "bot-msg";
+            errMsg.textContent = "You must be logged in to purchase tickets. Please log in and try again.";
+            chatWindow.appendChild(errMsg);
+            setPendingBooking(null);
+            return;
           }
-        }
 
-        console.log("Best match:", bestMatch?.name, "score:", highestScore);
+          const normalize = (str) =>
+            str
+              .toLowerCase()
+              .replace(/[^a-z0-9 ]/g, "")
+              .replace(/\s+/g, " ")
+              .trim();
 
-        if (!bestMatch || highestScore < 0.25) {
-          speakResponse(
-            "Sorry, I couldn’t find that event to complete the booking."
+          const normalizedTarget = normalize(current.event);
+          console.log("Normalized target:", normalizedTarget);
+
+          console.log("Available events:");
+          eventsRef.current.forEach((e, i) =>
+            console.log(`  [${i}] ${normalize(e.name)}`)
           );
-          const failMsg = document.createElement("div");
-          failMsg.className = "bot-msg";
-          failMsg.textContent = "Could not find the event. Please try again.";
-          chatWindow.appendChild(failMsg);
+
+          // Find best match among current events
+          let bestMatch = null;
+          let highestScore = 0;
+
+          for (const e of eventsRef.current) {
+            const normalizedEvent = normalize(e.name);
+            const targetWords = new Set(normalizedTarget.split(" "));
+            const eventWords = new Set(normalizedEvent.split(" "));
+            const intersection = [...targetWords].filter((w) =>
+              eventWords.has(w)
+            ).length;
+            const union = new Set([...targetWords, ...eventWords]).size;
+            const score = intersection / union;
+
+            if (score > highestScore) {
+              highestScore = score;
+              bestMatch = e;
+            }
+          }
+
+          console.log("Best match:", bestMatch?.name, "score:", highestScore);
+
+          if (!bestMatch || highestScore < 0.25) {
+            speakResponse(
+              "Sorry, I couldn’t find that event to complete the booking."
+            );
+            const failMsg = document.createElement("div");
+            failMsg.className = "bot-msg";
+            failMsg.textContent = "Could not find the event. Please try again.";
+            chatWindow.appendChild(failMsg);
+            setPendingBooking(null);
+            return;
+          }
+
+          // Proceed with booking
+          console.log("Attempting purchase with credentials...");
+          const res = await fetch(
+            `${CLIENT_BASE}/api/events/${bestMatch.id}/purchase`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+              },
+              body: JSON.stringify({ quantity: current.tickets }),
+              credentials: 'include',
+            }
+          );
+
+          console.log("Purchase response status:", res.status);
+
+          if (res.ok) {
+            const result = await res.json();
+            console.log("Purchase successful:", result);
+            speakResponse(`Your tickets for ${bestMatch.name} have been booked.`);
+            const successMsg = document.createElement("div");
+            successMsg.className = "bot-msg";
+            successMsg.textContent = `Successfully booked ${current.tickets} ticket(s) for ${bestMatch.name}!`;
+            chatWindow.appendChild(successMsg);
+
+            // Refresh events to get updated ticket counts
+            const eventsRes = await fetch(`${CLIENT_BASE}/api/events`);
+            if (eventsRes.ok) {
+              const updatedEvents = await eventsRes.json();
+              setEvents(updatedEvents);
+              eventsRef.current = updatedEvents;
+            } else {
+              // Fallback to optimistic update
+              setEvents((prev) =>
+                prev.map((e) =>
+                  e.id === bestMatch.id
+                    ? { ...e, tickets: (e.tickets ?? 0) - current.tickets }
+                    : e
+                )
+              );
+            }
+          } else {
+            // Handle auth errors
+            const errorText = await res.text().catch(() => "Unknown error");
+            console.error("Purchase failed:", res.status, errorText);
+            if (res.status === 401) {
+              speakResponse("Please log in to purchase tickets.");
+              const errMsg = document.createElement("div");
+              errMsg.className = "bot-msg";
+              errMsg.textContent = "You must be logged in to purchase tickets.";
+              chatWindow.appendChild(errMsg);
+            } else {
+              speakResponse("Sorry, I couldn't complete the booking.");
+              const errMsg = document.createElement("div");
+              errMsg.className = "bot-msg";
+              errMsg.textContent = `Booking failed: ${errorText}`;
+              chatWindow.appendChild(errMsg);
+            }
+          }
+
           setPendingBooking(null);
           return;
         }
-
-        // Proceed with booking
-        console.log("Attempting purchase with credentials...");
-        const res = await fetch(
-          `${CLIENT_BASE}/api/events/${bestMatch.id}/purchase`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-            },
-            body: JSON.stringify({ quantity: current.tickets }),
-            credentials: 'include',
-          }
-        );
-
-        console.log("Purchase response status:", res.status);
-
-        if (res.ok) {
-          const result = await res.json();
-          console.log("Purchase successful:", result);
-          speakResponse(`Your tickets for ${bestMatch.name} have been booked.`);
-          const successMsg = document.createElement("div");
-          successMsg.className = "bot-msg";
-          successMsg.textContent = `Successfully booked ${current.tickets} ticket(s) for ${bestMatch.name}!`;
-          chatWindow.appendChild(successMsg);
-
-          // Refresh events to get updated ticket counts
-          const eventsRes = await fetch(`${CLIENT_BASE}/api/events`);
-          if (eventsRes.ok) {
-            const updatedEvents = await eventsRes.json();
-            setEvents(updatedEvents);
-            eventsRef.current = updatedEvents;
-          } else {
-            // Fallback to optimistic update
-            setEvents((prev) =>
-              prev.map((e) =>
-                e.id === bestMatch.id
-                  ? { ...e, tickets: (e.tickets ?? 0) - current.tickets }
-                  : e
-              )
-            );
-          }
-        } else {
-          // Handle auth errors
-          const errorText = await res.text().catch(() => "Unknown error");
-          console.error("Purchase failed:", res.status, errorText);
-          if (res.status === 401) {
-            speakResponse("Please log in to purchase tickets.");
-            const errMsg = document.createElement("div");
-            errMsg.className = "bot-msg";
-            errMsg.textContent = "You must be logged in to purchase tickets.";
-            chatWindow.appendChild(errMsg);
-          } else {
-            speakResponse("Sorry, I couldn't complete the booking.");
-            const errMsg = document.createElement("div");
-            errMsg.className = "bot-msg";
-            errMsg.textContent = `Booking failed: ${errorText}`;
-            chatWindow.appendChild(errMsg);
-          }
-        }
-
-        setPendingBooking(null);
-        return;
       }
+
+      // Normal LLM request (no confirmation yet)
+      const res = await fetch(`${LLM_BASE}/api/llm/parse`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+        credentials: 'include',
+      });
+
+      if (!res.ok) throw new Error("LLM backend not responding");
+      const data = await res.json();
+
+      const reply = document.createElement("div");
+      reply.className = "bot-msg";
+
+      if (data.intent === "propose_booking") {
+        reply.textContent = `I found ${data.event} with ${data.tickets} ticket(s). Would you like to confirm this booking?`;
+        chatWindow.appendChild(reply);
+        speakResponse(reply.textContent);
+        setPendingBooking({ event: data.event, tickets: data.tickets }); // store booking info
+      } else if (data.intent === "show_events") {
+        reply.textContent = "Here are the available events on campus.";
+        chatWindow.appendChild(reply);
+        speakResponse(reply.textContent);
+      } else {
+        reply.textContent = `You said: "${text}"`;
+        chatWindow.appendChild(reply);
+        speakResponse(`You said ${text}`);
+      }
+    } catch (err) {
+      console.error("LLM error:", err);
+      const failMsg = document.createElement("div");
+      failMsg.className = "bot-msg";
+      failMsg.textContent = "Sorry, I could not reach the LLM service.";
+      chatWindow.appendChild(failMsg);
+      speakResponse(failMsg.textContent);
     }
+  };
 
-    // Normal LLM request (no confirmation yet)
-    const res = await fetch(`${LLM_BASE}/api/llm/parse`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-      credentials: 'include',
-    });
-
-    if (!res.ok) throw new Error("LLM backend not responding");
-    const data = await res.json();
-
-    const reply = document.createElement("div");
-    reply.className = "bot-msg";
-
-    if (data.intent === "propose_booking") {
-      reply.textContent = `I found ${data.event} with ${data.tickets} ticket(s). Would you like to confirm this booking?`;
-      chatWindow.appendChild(reply);
-      speakResponse(reply.textContent);
-      setPendingBooking({ event: data.event, tickets: data.tickets }); // store booking info
-    } else if (data.intent === "show_events") {
-      reply.textContent = "Here are the available events on campus.";
-      chatWindow.appendChild(reply);
-      speakResponse(reply.textContent);
-    } else {
-      reply.textContent = `You said: "${text}"`;
-      chatWindow.appendChild(reply);
-      speakResponse(`You said ${text}`);
-    }
-  } catch (err) {
-    console.error("LLM error:", err);
-    const failMsg = document.createElement("div");
-    failMsg.className = "bot-msg";
-    failMsg.textContent = "Sorry, I could not reach the LLM service.";
-    chatWindow.appendChild(failMsg);
-    speakResponse(failMsg.textContent);
-  }
-};
-
-
-/**
- * Purpose: Provides clear spoken feedback for chatbot responses
- * Input: text - String, The message the chatbot should vocalize
- * Ouput: Audible speech via the system’s default voice
- */
+  /**
+   * Purpose: Provides clear spoken feedback for chatbot responses
+   * Input: text - String, The message the chatbot should vocalize
+   * Ouput: Audible speech via the system’s default voice
+   */
   const speakResponse = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
@@ -525,12 +526,12 @@ const sendToLLM = async (text, chatWindow) => {
 
   // Always render the main UI; show loading/empty states within the events section
 
-/**
- * Purpose: Displays the full TigerTix frontend with event listings and a
- *          voice-enabled chatbot interface
- * Input: Event data from backend and speech/text commands
- * Ouput: Accessible, interactive user interface for booking tickets by voice or button click
- */
+  /**
+   * Purpose: Displays the full TigerTix frontend with event listings and a
+   *          voice-enabled chatbot interface
+   * Input: Event data from backend and speech/text commands
+   * Ouput: Accessible, interactive user interface for booking tickets by voice or button click
+   */
   return (
     <main className="App">
       <h1 tabIndex="0">Clemson Campus Events</h1>
