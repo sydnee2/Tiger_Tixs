@@ -75,23 +75,22 @@ useEffect(() => {
  * Ouput: Updates events state, logs data, and stops the loading spinner
  */
   useEffect(() => {
-    fetch(`${CLIENT_BASE}/api/events`)
-      .then((res) => {
+    const fetchEvents = async () => {
+      try {
+        const res = await fetch(`${CLIENT_BASE}/api/events`);
         if (!res.ok) throw new Error("Failed to fetch events");
-        return res.json();
-      })
-      .then((data) => {
+        const data = await res.json();
         setEvents(data);
         eventsRef.current = data;
-
         console.log("Events fetched from backend:", data);
         setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Error fetching events:", err);
         setLoading(false);
-      });
-  }, []);
+      }
+    };
+    fetchEvents();
+  }, [CLIENT_BASE]);
 
 /**
  * Purpose: Purchases one ticket for a selected event and updates the UI
@@ -326,8 +325,21 @@ const sendToLLM = async (text, chatWindow) => {
 
       console.log("DEBUG - current bookingRef:", bookingRef.current);
       console.log("DEBUG - all events fetched from DB:", eventsRef.current);
+      console.log("DEBUG - isAuthenticated:", isAuthenticated);
+      console.log("DEBUG - authToken:", authToken ? "present" : "missing");
 
       if (response.includes("yes")) {
+        // Check if user is authenticated before attempting purchase
+        if (!isAuthenticated && !authToken) {
+          speakResponse("Please log in first to purchase tickets.");
+          const errMsg = document.createElement("div");
+          errMsg.className = "bot-msg";
+          errMsg.textContent = "You must be logged in to purchase tickets. Please log in and try again.";
+          chatWindow.appendChild(errMsg);
+          setPendingBooking(null);
+          return;
+        }
+
         const normalize = (str) =>
           str
             .toLowerCase()
@@ -378,6 +390,7 @@ const sendToLLM = async (text, chatWindow) => {
         }
 
         // Proceed with booking
+        console.log("Attempting purchase with credentials...");
         const res = await fetch(
           `${CLIENT_BASE}/api/events/${bestMatch.id}/purchase`,
           {
@@ -391,20 +404,33 @@ const sendToLLM = async (text, chatWindow) => {
           }
         );
 
+        console.log("Purchase response status:", res.status);
+
         if (res.ok) {
+          const result = await res.json();
+          console.log("Purchase successful:", result);
           speakResponse(`Your tickets for ${bestMatch.name} have been booked.`);
           const successMsg = document.createElement("div");
           successMsg.className = "bot-msg";
           successMsg.textContent = `Successfully booked ${current.tickets} ticket(s) for ${bestMatch.name}!`;
           chatWindow.appendChild(successMsg);
 
-          setEvents((prev) =>
-            prev.map((e) =>
-              e.id === bestMatch.id
-                ? { ...e, tickets: (e.tickets ?? 0) - current.tickets }
-                : e
-            )
-          );
+          // Refresh events to get updated ticket counts
+          const eventsRes = await fetch(`${CLIENT_BASE}/api/events`);
+          if (eventsRes.ok) {
+            const updatedEvents = await eventsRes.json();
+            setEvents(updatedEvents);
+            eventsRef.current = updatedEvents;
+          } else {
+            // Fallback to optimistic update
+            setEvents((prev) =>
+              prev.map((e) =>
+                e.id === bestMatch.id
+                  ? { ...e, tickets: (e.tickets ?? 0) - current.tickets }
+                  : e
+              )
+            );
+          }
         } else {
           // Handle auth errors
           const errorText = await res.text().catch(() => "Unknown error");
