@@ -2,7 +2,7 @@
 
 TigerTix is a Clemson-themed full-stack ticket booking system with a voice-enabled LLM assistant. Users can search and book campus event tickets using natural language or speech.
 
-- Live Demo: https://clemson-ticketing-system.vercel.app/
+- Live Demo: https://tiger-tixs.vercel.app/
 
 ## Download
 - GitHub: https://github.com/Nickflix21/ClemsonTicketingSystem
@@ -258,13 +258,13 @@ If you must use another port, update CORS in `backend/client-service/server.js` 
 1. Render auto-detects services via `render.yaml` and deploys from each `rootDir`.
 2. In Render dashboard, set env vars:
   - `JWT_SECRET` (shared between `user-authentication` and `client-service`) – override the placeholder value.
-  - `ALLOWED_ORIGIN` = `http://localhost:3000,https://clemson-ticketing-system.vercel.app/`
+  - `ALLOWED_ORIGIN` = `http://localhost:3000,https://tiger-tixs.vercel.app/`
   - `COOKIE_SECURE=true` and `NODE_ENV=production` for `user-authentication`.
 3. Verify health:
-  - `https://client-service-kmaf.onrender.com/health`
-  - `https://llm-driven-booking-kmaf.onrender.com/health`
-  - `https://user-authentication-kmaf.onrender.com/health`
-  - `https://admin-service-kmaf.onrender.com/api/admin/events`
+  - `https://client-service-try9.onrender.com/health`
+  - `https://llm-driven-booking.onrender.com/health`
+  - `https://user-authentication-xfj1.onrender.com/health`
+  - `https://admin-service-4qps.onrender.com/api/admin/events`
 
 ## Feature Checklist
 - Loads and displays events.
